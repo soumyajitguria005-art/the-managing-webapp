@@ -1,0 +1,7 @@
+{
+  "name": "CIT Campus Scheduling & Venue Management Platform",
+  "description": "Backend and database engineering platform for Chilika Institute of Technology (CIT) campus scheduling, venue management, and timetable optimization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

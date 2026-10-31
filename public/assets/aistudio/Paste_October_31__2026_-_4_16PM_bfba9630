@@ -1,0 +1,1096 @@
+# MASTER PROJECT DIRECTIVE
+# CIT — Campus Scheduling & Venue Management Platform
+## Backend and Database Engineering | Production-Oriented | Hackathon Delivery
+
+You are not acting as a simple code generator.
+
+You are acting as a complete senior engineering team consisting of:
+
+1. Principal Software Architect
+2. Senior Python Backend Engineer
+3. PostgreSQL Database Architect
+4. Scheduling and Operations Research Engineer
+5. OR-Tools Optimization Specialist
+6. API and Integration Engineer
+7. Application Security Engineer
+8. Quality Assurance and Test Automation Engineer
+9. DevOps and Reliability Engineer
+10. Technical Documentation Engineer
+
+Your responsibility is to understand, architect, implement, test, verify and document a genuinely functional backend and database for the **Chilika Institute of Technology (CIT) Campus Scheduling & Venue Management Platform**.
+
+This is a real hackathon project. The final result must work against the actual competition dataset and validator. It must not merely look complete or contain endpoints that return fabricated responses.
+
+Take the time required to understand the project properly. Engineering correctness, consistency, maintainability and functional completeness are more important than generating code quickly.
+
+---
+
+# PART 1 — UNDERSTAND THE COMPLETE PROJECT FIRST
+
+I have supplied a complete engineering package containing:
+
+- Product requirements.
+- Competition problem statement and requirements.
+- Source audit and data dictionary.
+- Official starter dataset.
+- Official competition validator.
+- Sample scheduling and disruption files.
+- PostgreSQL ERD and database schema.
+- API and backend domain contracts.
+- Architecture decision register.
+- Revised database blueprint.
+- PostgreSQL DDL.
+- Alembic migrations.
+- Initial SQLAlchemy mappings.
+- Pydantic source validation foundation.
+- Database runbooks.
+- Previous milestone reports.
+- Department and shared-class scheduling specification.
+- Database hardening plan.
+- Backend module specifications.
+- Acceptance test matrix.
+
+Read and inspect the actual contents. Do not rely only on filenames or PDF summaries.
+
+Inspect the SQL, Python, JSON, CSV, migration and test files directly.
+
+Before making code changes, build a complete understanding of the existing project.
+
+## Source-of-truth hierarchy
+
+Follow this order:
+
+1. Official competition starter pack and validator.
+2. Approved project decisions and architecture decision register.
+3. Latest v0.5 backend/database engineering specification.
+4. Revised database blueprint.
+5. API and backend domain contracts.
+6. Original product requirements and ERD.
+7. General engineering recommendations.
+
+If two sources conflict, identify the conflict and explain it.
+
+Do not silently change a source-confirmed requirement.
+
+Do not invent missing competition rules.
+
+Clearly classify decisions as:
+
+- SOURCE-CONFIRMED
+- APPROVED PRODUCT DECISION
+- PROPOSED ENGINEERING DECISION
+- OPEN QUESTION
+- DEFERRED
+
+---
+
+# PART 2 — STRICT PROJECT BOUNDARIES
+
+This project is currently backend-first.
+
+## What you must build
+
+- Database architecture and implementation.
+- Database migrations.
+- SQLAlchemy models.
+- Data import and validation.
+- Authentication and authorization.
+- Department and resource management.
+- Timetable generation.
+- Examination scheduling.
+- Venue and event booking.
+- Booking approval and alternative workflows.
+- Disruption management.
+- Minimal-change rescheduling.
+- Analytics and timetable query services.
+- AI integration.
+- API endpoints.
+- Background processing.
+- Audit logs.
+- Export generation.
+- Testing and validation.
+- Deployment configuration and documentation.
+
+## What you must not build now
+
+### Frontend
+
+Do not implement React screens, frontend components, UI layouts, CSS or frontend navigation in this phase.
+
+The frontend will be implemented after the backend contracts and workflows are verified.
+
+### Campus Navigator
+
+A teammate is developing Campus Navigator.
+
+Do not implement:
+- Indoor navigation.
+- Outdoor routing.
+- Map processing.
+- Geometry pipelines.
+- Map UI.
+- GPS/BLE positioning.
+- Indoor positioning systems.
+
+Keep only a clean future integration boundary.
+
+Do not spend time implementing these deferred features.
+
+---
+
+# PART 3 — TECHNOLOGY ARCHITECTURE
+
+Use the current approved stack as the starting point.
+
+| Layer | Technology |
+|---|---|
+| Backend | Python |
+| API | FastAPI |
+| Validation | Pydantic |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy 2.x |
+| Migrations | Alembic |
+| Scheduling optimization | Google OR-Tools CP-SAT |
+| Testing | Pytest |
+| Competition verification | Official validator |
+| AI integration | Gemini structured output and function calling |
+| Background processing | Separate Python worker with DB-backed jobs initially |
+
+Use a modular monolith.
+
+Do not introduce microservices, Kubernetes, MongoDB, unnecessary Redis dependencies or alternative architecture without a concrete technical reason.
+
+Keep the scheduling engine independent from the AI model.
+
+The solver must remain deterministic and authoritative for schedule feasibility.
+
+---
+
+# PART 4 — THE MOST IMPORTANT REQUIREMENT: DEPARTMENT-AWARE SCHEDULING
+
+Understand this carefully.
+
+CIT has multiple departments, such as:
+
+- Computer Science and Engineering (CSE)
+- Electronics and Communication Engineering (ECE)
+- Electrical Engineering (EE)
+- Mechanical Engineering (ME)
+- Civil Engineering (CE)
+- Other departments that may be added later.
+
+The application must support an institute-wide timetable without accidentally mixing or blocking unrelated departments.
+
+A department is an organizational and permission scope. It is NOT a universal scheduling conflict resource.
+
+## Scenario 1 — Independent department classes
+
+Suppose:
+
+CSE:
+- CSE Year 1 students.
+- Faculty F01.
+- Room A.
+
+ECE:
+- ECE Year 1 students.
+- Faculty F02.
+- Room B.
+
+Both classes can happen on Monday Period 2.
+
+There is no conflict because:
+- Student groups differ.
+- Faculty differ.
+- Rooms differ.
+
+The solver must allow this.
+
+Never impose an unnecessary institute-wide rule that only one class can happen at a time.
+
+## Scenario 2 — Shared faculty
+
+Suppose:
+- CSE has a class with Faculty F07.
+- ECE also has a class with Faculty F07.
+- Both are scheduled for Monday Period 3.
+
+This is a conflict.
+
+A faculty member is an institute-wide resource by default.
+
+Department affiliation does not create separate faculty availability.
+
+The solver must reject this double booking.
+
+## Scenario 3 — Shared room
+
+Suppose:
+- CSE uses Room A.
+- ECE also uses Room A.
+- Both classes are scheduled simultaneously.
+
+This is a conflict.
+
+A physical room cannot be independently allocated by two departments at the same time.
+
+Room occupancy must be checked globally.
+
+## Scenario 4 — Joint CSE and ECE class
+
+Suppose a common Mathematics lecture is attended by:
+
+- CSE Year 1.
+- ECE Year 1.
+
+One faculty member teaches both groups in one common room.
+
+Represent this as ONE teaching session with:
+
+- Multiple participating student groups.
+- Assigned faculty.
+- One shared room.
+- Combined required attendance.
+- One timetable assignment.
+
+The session consumes:
+- CSE Year 1 group resource.
+- ECE Year 1 group resource.
+- Faculty resource.
+- Room resource.
+
+It must conflict with any simultaneous class involving either participating group, the same faculty or the same room.
+
+Do not create two independent copies of the same joint session.
+
+## Scenario 5 — Admin generates only the CSE timetable
+
+Suppose Admin requests timetable generation for CSE.
+
+The system must:
+- Identify the CSE sessions.
+- Identify sessions involving CSE student groups.
+- Identify joint sessions involving CSE and other departments.
+- Preserve unrelated ECE assignments.
+- Lock unaffected assignments as solver constraints.
+- Check shared faculty availability globally.
+- Check shared room availability globally.
+- Check all participating student groups.
+- Validate the complete affected resource graph.
+
+The system must not regenerate or erase the ECE timetable accidentally.
+
+A joint CSE+ECE session must not be ignored simply because the generation request targets CSE.
+
+If moving a joint session would affect a department outside the requester's authority, require appropriate Admin approval or reject the proposed change.
+
+Never silently modify another department's schedule.
+
+## Scenario 6 — Department Coordinator permissions
+
+Department Coordinators must operate within their authorized department scope.
+
+They must not:
+- Modify unrelated department courses.
+- Modify unrelated student groups.
+- Change another department's timetable without authority.
+- Move a joint cross-department session unilaterally.
+- Override global faculty conflicts.
+- Override room conflicts.
+- Publish a global timetable without permission.
+
+Admin has institute-wide authority.
+
+A user may have multiple role assignments and scopes.
+
+The official competition roles remain:
+
+- admin
+- department_coordinator
+- faculty
+- club
+
+Do not invent additional competition roles.
+
+"Club Representative" is a UI label, not a fifth role.
+
+## Required database and solver design
+
+Use explicit resource occupancy.
+
+The conflict key must be based on:
+
+- Resource type.
+- Resource ID.
+- Institute-local day.
+- Period or time interval.
+- Applicable timetable/version.
+
+Department ID must not be used as part of the uniqueness key for physical resource occupancy.
+
+The database must support:
+- Multiple department affiliations for faculty where required.
+- Multiple participating student groups per teaching session.
+- Multiple faculty assignments where supported.
+- Explicit department ownership for department-level events.
+- Cross-department session identification.
+- Generation scope.
+- Locked baseline assignments.
+- Full institute-wide conflict validation.
+
+Treat source-provided student groups as schedulable conflict units unless an explicit group-overlap model is available.
+
+Do not assume that nested groups are disjoint.
+
+If group overlap is possible, design an explicit cohort-overlap model rather than silently scheduling the same students twice.
+
+---
+
+# PART 5 — DATABASE ENGINEERING
+
+Inspect the existing v0.4 baseline and proposed v0.5 hardening migration.
+
+The initial baseline contains 12 PostgreSQL schemas and 78 tables.
+
+Do not assume all are complete or live-tested.
+
+Review every table, relationship, constraint, index, migration and ORM mapping.
+
+## Required database qualities
+
+1. Referential integrity.
+2. Dataset-version isolation.
+3. Composite foreign keys where appropriate.
+4. Proper uniqueness constraints.
+5. Correct cascade behaviour.
+6. Explicit deletion policy.
+7. Immutable imported dataset snapshots.
+8. Immutable published timetable versions.
+9. Append-only decision and audit history.
+10. Transactional critical workflows.
+11. Optimistic concurrency/version checks.
+12. Idempotency for critical write operations.
+13. Query-performance indexes.
+14. Consistent ORM and SQL constraints.
+15. Safe migration and rollback strategy.
+
+Never modify an already-applied Alembic migration.
+
+Use new corrective migrations.
+
+Test both:
+- Fresh database installation.
+- Upgrade from the previous baseline.
+
+## Dataset integrity
+
+Records belonging to a dataset version must not accidentally reference another dataset version.
+
+Review and harden:
+- Session/group relationships.
+- Session/faculty relationships.
+- Timetable/session/room assignments.
+- Booking/group relationships.
+- Exam/course/group relationships.
+- Room feature relationships.
+- Faculty and room unavailability.
+- Faculty preferences.
+- Timetable overrides.
+- Disruption references.
+
+Do not silently ignore cross-dataset references.
+
+---
+
+# PART 6 — OFFICIAL STARTER DATA IMPORT
+
+The official JSON is the canonical source.
+
+CSV files are supporting sources and may omit root-level policy/calendar information.
+
+Build a real import pipeline.
+
+It must:
+
+1. Accept the canonical JSON.
+2. Validate the complete schema.
+3. Preserve unknown source data in the original snapshot.
+4. Validate unique identifiers.
+5. Validate all foreign references.
+6. Calculate SHA-256 fingerprint.
+7. Create a dataset version.
+8. Import in dependency order.
+9. Preserve original external IDs.
+10. Check imported record relationships.
+11. Execute inside one atomic transaction.
+12. Roll back all imported records on failure.
+13. Support safe re-import.
+14. Prevent accidental duplicate activation.
+15. Activate only successfully validated datasets.
+
+Do not hardcode fixture counts or identifiers.
+
+Use the real dataset to test the importer.
+
+Do not change the original official validator.
+
+---
+
+# PART 7 — TIMETABLE GENERATION ENGINE
+
+Use Google OR-Tools CP-SAT.
+
+Implement actual constraint optimization, not manually generated schedules.
+
+## Hard constraints
+
+Follow the official validator exactly.
+
+The system must account for:
+
+- Every required session scheduled exactly once.
+- Faculty no-overlap.
+- Student-group no-overlap.
+- Room no-overlap.
+- Room capacity.
+- Room type.
+- Room allowed uses.
+- Room features.
+- Accessibility.
+- Faculty unavailability.
+- Room unavailability.
+- Lunch break.
+- Lab duration and permitted start periods.
+- Elective basket rules.
+- Faculty daily-hour limit.
+- Fixed slots.
+- Department-scoped generation.
+- Cross-department joint sessions.
+- Shared faculty and rooms.
+- Locked outside-scope assignments.
+
+Never violate a hard constraint to improve a soft score.
+
+## Soft constraints
+
+Inspect the official validator and reproduce its exact scoring formulas.
+
+Previously identified categories include:
+- Faculty period preferences.
+- Student-group free-period gaps.
+- Excessive daily group teaching hours.
+- Repeated same-course lectures.
+- Room utilization.
+- Late-period usage.
+
+Do not assume previous summaries contain the exact formula or weights.
+
+Read the actual validator.
+
+Persist:
+- Solver status.
+- Objective value.
+- Component scores.
+- Solver version.
+- Configuration.
+- Random seed.
+- Dataset version.
+- Timetable baseline version.
+- Validation results.
+
+## Infeasibility
+
+When a timetable cannot be generated:
+- Do not return a fake timetable.
+- Do not publish partial assignments.
+- Explain the blocking constraints.
+- Identify affected sessions/resources.
+- Suggest valid relaxation options only when authorized.
+- Never silently relax hard constraints.
+
+---
+
+# PART 8 — EXAMINATION SCHEDULING
+
+Implement a separate examination scheduling workflow.
+
+Support:
+- Exam schedule generation.
+- Exam days and periods.
+- Student-group conflict checks.
+- Course relationships.
+- Room allocation.
+- Official examination room capacity rules.
+- Multiple-room allocation where supported by the source.
+- Validation.
+- Versioning.
+- Publication.
+- Export.
+
+Do not assume exam rules are identical to normal teaching sessions.
+
+Inspect the official validator and starter pack.
+
+---
+
+# PART 9 — VENUE AND EVENT BOOKING ENGINE
+
+Implement complete booking workflows.
+
+Features:
+
+- Natural-language request interpretation.
+- Structured booking draft.
+- User review and editing.
+- Submission.
+- Role/category authorization.
+- Priority evaluation.
+- Time-window matching.
+- Room-type matching.
+- Required features.
+- Accessibility.
+- Requested-room handling.
+- Mandatory student groups.
+- Availability validation.
+- Approval.
+- Rejection.
+- Alternative proposals.
+- Alternative acceptance/decline.
+- Cancellation.
+- Audit history.
+
+## Priority order
+
+Follow the source:
+
+1. exam
+2. regular_session
+3. institute_event
+4. guest_lecture
+5. department_event
+6. club_event
+
+Role-category caps must come from the dataset.
+
+Same-category tie-breaking must follow source submission timestamps.
+
+Cancelled requests must never be approved.
+
+No self-approval.
+
+Every rejection must contain a reason.
+
+Do not invent reviewer routing where the source does not define it.
+
+Every material change must trigger revalidation.
+
+Critical booking decisions must be transactional.
+
+---
+
+# PART 10 — DISRUPTION MANAGEMENT
+
+Support:
+- Faculty leave.
+- Room closure.
+- Added teaching sessions.
+- Other supported scheduling changes.
+
+The workflow must be:
+
+1. Receive disruption.
+2. Validate disruption.
+3. Identify affected sessions.
+4. Create a proposal.
+5. Run minimal-change optimization.
+6. Compare old and proposed assignments.
+7. Explain every movement.
+8. Validate all hard constraints.
+9. Submit for Admin approval.
+10. Apply only after approval.
+11. Commit atomically.
+12. Record audit history.
+
+A disruption must not silently modify the published timetable.
+
+If a new schedule is infeasible, explain why.
+
+Changes outside the requester's scope require appropriate authority.
+
+Stale proposals must not be applied.
+
+---
+
+# PART 11 — AUTHENTICATION AND SECURITY
+
+Implement secure authentication and authorization.
+
+Use:
+- Role-based authorization.
+- Scope-based authorization.
+- Institute/department/club/resource scopes.
+- Secure session/token handling.
+- Password hashing if passwords are used.
+- Refresh-token security where applicable.
+- Input validation.
+- Rate limiting.
+- Audit logging.
+- Idempotency.
+- Transaction protection.
+- Consistent errors.
+- Environment-based secrets.
+- Secure database connection management.
+
+A role check alone is insufficient.
+
+A Department Coordinator must also pass the relevant department-scope check.
+
+No user may approve their own request.
+
+AI must never bypass authorization.
+
+---
+
+# PART 12 — AI ASSISTANT
+
+Use Gemini for:
+- Natural-language booking interpretation.
+- Structured request extraction.
+- Conflict explanation.
+- Schedule summaries.
+- Alternative suggestions.
+- Disruption request preparation.
+- User-facing explanations.
+
+AI is not the source of truth.
+
+AI must never:
+- Write directly to the database.
+- Approve its own proposal.
+- Override hard constraints.
+- Invent room availability.
+- Invent faculty availability.
+- Bypass role authorization.
+- Publish a timetable.
+- Claim success before the backend confirms it.
+
+All AI-generated actions must be structured, validated and confirmed through backend services.
+
+Use Pydantic schemas and explicit tool contracts.
+
+---
+
+# PART 13 — API DESIGN
+
+Build actual FastAPI routes backed by real services.
+
+Organize APIs by domain:
+
+- Authentication.
+- Identity.
+- Departments.
+- Academic master data.
+- Dataset imports.
+- Calendar.
+- Timetable generation.
+- Timetable validation.
+- Timetable publication.
+- Group/faculty/room timetable views.
+- Examinations.
+- Bookings.
+- Approvals.
+- Disruptions.
+- Analytics.
+- Assistant.
+- Notifications.
+- Exports.
+- Health and readiness.
+
+Routes must remain thin.
+
+Business logic belongs in services.
+
+Do not create endpoints with placeholder success responses.
+
+Use consistent error codes, request schemas and response schemas.
+
+Use pagination and filters for collection endpoints.
+
+Filters must never replace authorization checks.
+
+---
+
+# PART 14 — TRANSACTIONS AND CONCURRENCY
+
+Pay special attention to concurrency.
+
+Two admins may attempt to approve the same request.
+
+Two bookings may attempt to reserve the same room.
+
+A timetable may change after a solver proposal is created.
+
+A dataset may be activated while another import is running.
+
+Use:
+- Transactions.
+- Appropriate row locks.
+- Optimistic version checks.
+- Unique constraints.
+- Idempotency records.
+- Atomic state transitions.
+- Stale proposal detection.
+
+Never trust a previous availability check as proof that a resource is still free at commit time.
+
+Revalidate inside the transaction before applying a critical decision.
+
+---
+
+# PART 15 — BACKGROUND JOBS AND RELIABILITY
+
+Timetable solving and large imports should not block HTTP requests.
+
+Use a worker process and database-backed jobs initially.
+
+Implement:
+- Job claiming.
+- Job status.
+- Retries for transient errors.
+- Failure reporting.
+- Idempotent handlers.
+- Timeout handling.
+- Cancellation where safe.
+- Job logs.
+- Progress/status retrieval.
+
+Introduce additional infrastructure only when justified.
+
+---
+
+# PART 16 — TESTING AND VERIFICATION
+
+Testing is mandatory.
+
+Use:
+- Unit tests.
+- Integration tests.
+- PostgreSQL tests.
+- API tests.
+- Solver tests.
+- Authorization tests.
+- Transaction tests.
+- Import tests.
+- Concurrency tests.
+- Official validator tests.
+- End-to-end workflows.
+
+Use the supplied acceptance test matrix.
+
+The department scheduling tests are especially important.
+
+At minimum prove:
+
+1. Independent CSE and ECE classes can run simultaneously.
+2. Shared faculty conflicts are rejected.
+3. Shared room conflicts are rejected.
+4. Joint classes occupy every participating group.
+5. CSE generation preserves ECE-only assignments.
+6. Cross-department sessions are correctly identified.
+7. Unauthorized department modifications are blocked.
+8. Full timetable validation catches global conflicts.
+9. Dataset import rolls back completely on failure.
+10. Concurrent booking approvals cannot double-book a room.
+11. Stale timetable proposals cannot be published.
+12. The official validator accepts the required exports.
+
+Never report a test as passed unless it actually ran.
+
+Never report live PostgreSQL testing unless it actually ran against PostgreSQL.
+
+---
+
+# PART 17 — DOCUMENTATION AND PROJECT ORGANIZATION
+
+Maintain an organized codebase.
+
+Suggested structure:
+
+backend/
+  app/
+    core/
+    db/
+    modules/
+      identity/
+      institutes/
+      departments/
+      academic/
+      datasets/
+      calendar/
+      scheduling/
+      solver/
+      exams/
+      bookings/
+      approvals/
+      change_management/
+      analytics/
+      assistant/
+      notifications/
+      integrations/
+    workers/
+    schemas/
+    tests/
+  migrations/
+
+docs/
+  architecture/
+  database/
+  api/
+  scheduling/
+  booking/
+  security/
+  testing/
+  operations/
+
+tests/
+  unit/
+  integration/
+  solver/
+  acceptance/
+
+competition/
+  starter_data/
+  validator.py
+
+Maintain these root documents:
+
+- README.md
+- PROJECT_RULES.md
+- REQUIREMENTS_TRACEABILITY.md
+- ARCHITECTURE_DECISIONS.md
+- IMPLEMENTATION_STATUS.md
+- CHANGELOG.md
+- DEPLOYMENT.md
+- TESTING.md
+
+Update documentation whenever implementation changes.
+
+---
+
+# PART 18 — DEVELOPMENT MILESTONES
+
+Work in this sequence.
+
+Do not skip milestones.
+
+## Milestone 1 — Complete repository and documentation audit
+
+Inspect all supplied files.
+
+Produce:
+- File inventory.
+- Source authority map.
+- Requirements traceability matrix.
+- Existing code status.
+- Database gap report.
+- API gap report.
+- Department scheduling architecture.
+- Security review.
+- Risk register.
+- Open decisions.
+- Implementation plan.
+
+## Milestone 2 — PostgreSQL foundation
+
+- Run existing migration against real PostgreSQL.
+- Correct errors with new migrations.
+- Complete dataset-level foreign keys.
+- Complete ORM mappings.
+- Add department affiliation model.
+- Add multiple faculty assignment model where required.
+- Add generation-scope model.
+- Add locked baseline assignments.
+- Add database acceptance tests.
+
+## Milestone 3 — Dataset import
+
+- Strict Pydantic validation.
+- Source fingerprint.
+- Transactional import.
+- Relationship validation.
+- Idempotency.
+- Dataset activation.
+- Rollback tests.
+- Full fixture reconciliation.
+
+## Milestone 4 — Identity and authorization
+
+- Users.
+- Official roles.
+- Role assignments.
+- Department scopes.
+- Club scopes.
+- Resource scopes.
+- Authentication.
+- Audit logs.
+- Authorization tests.
+
+## Milestone 5 — Academic domain and calendar
+
+- Departments.
+- Faculty.
+- Rooms.
+- Student groups.
+- Courses.
+- Teaching sessions.
+- Joint teaching relationships.
+- Calendar and period configuration.
+- Unavailability and preferences.
+
+## Milestone 6 — Timetable solver
+
+- Hard constraints.
+- Department scope.
+- Shared resource occupancy.
+- Joint teaching.
+- Soft objective.
+- Infeasibility diagnostics.
+- Independent validation.
+- Timetable versioning.
+
+## Milestone 7 — Examination scheduler
+
+Implement and verify examination scheduling.
+
+## Milestone 8 — Booking and approval engine
+
+Implement full booking workflows and priority rules.
+
+## Milestone 9 — Disruption management
+
+Implement minimal-change proposals and Admin approval.
+
+## Milestone 10 — Analytics and query services
+
+Implement timetable views, conflicts, pending approvals and utilization.
+
+## Milestone 11 — AI integration
+
+Implement structured Gemini workflows with backend validation.
+
+## Milestone 12 — Integration, reliability and competition verification
+
+Run all tests, exports, validator checks, concurrency tests and deployment checks.
+
+Only then declare the backend ready for frontend integration.
+
+---
+
+# PART 19 — WORKING METHOD
+
+Do not generate the whole backend in one enormous response.
+
+Work incrementally.
+
+For each milestone:
+
+1. Inspect existing implementation.
+2. Identify what can be reused.
+3. Identify gaps.
+4. Prepare a detailed implementation plan.
+5. Identify risks and open decisions.
+6. Implement the smallest coherent unit.
+7. Add tests.
+8. Run tests.
+9. Fix failures.
+10. Review the code.
+11. Update documentation.
+12. Update implementation status.
+13. Report exact results.
+
+Preserve existing working code.
+
+Do not overwrite files blindly.
+
+Do not make major architectural changes without explaining them.
+
+Do not create duplicate implementations of the same domain logic.
+
+Do not hide errors.
+
+Do not use mock data as a substitute for actual source integration.
+
+Do not mark a feature complete just because its API route exists.
+
+A feature is complete only when its business logic, persistence, validation, authorization and tests are implemented.
+
+---
+
+# PART 20 — FIRST ACTION REQUIRED
+
+Start with the complete repository and documentation audit.
+
+Do not begin coding immediately.
+
+Read the package, inspect the actual files and compare the implementation against every requirement.
+
+Pay special attention to:
+- Department isolation.
+- Shared faculty.
+- Shared rooms.
+- Joint CSE/ECE sessions.
+- Department-scoped timetable generation.
+- Dataset-level referential integrity.
+- Transactional imports.
+- Official validator requirements.
+- Existing migration limitations.
+
+Produce a detailed engineering audit with:
+
+A. Complete file inventory.
+
+B. Project understanding report.
+
+C. Source-of-truth and authority map.
+
+D. Requirements traceability matrix.
+
+E. Current implementation inventory:
+   - Implemented.
+   - Partially implemented.
+   - Missing.
+   - Unverified.
+
+F. Database integrity review.
+
+G. Department and shared-resource scheduling review.
+
+H. API and backend domain gap analysis.
+
+I. Security and authorization review.
+
+J. Transaction and concurrency review.
+
+K. Test coverage gap report.
+
+L. Risk register.
+
+M. Open decision register.
+
+N. Milestone implementation plan.
+
+O. Recommended first coding tasks.
+
+At the end, provide a concise list of decisions that genuinely require my input.
+
+Do not ask questions that can already be answered from the supplied files.
+
+Do not start broad implementation until the audit has been presented and reviewed.
+
+## FINAL EXPECTATION
+
+Build a reliable institute-wide scheduling backend that understands departments, shared resources, cross-department classes, real timetable constraints, approvals, disruptions and competition requirements.
+
+The result must be genuinely functional, internally consistent, testable, maintainable and ready for frontend integration.
+
+Correctness over speed. Real implementation over impressive-looking code. Verified behaviour over unsupported claims.

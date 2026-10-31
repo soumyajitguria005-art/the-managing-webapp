@@ -1,0 +1,5 @@
+Source: CrunchWeek_StarterPack/data/cit_public.json
+SHA-256: 8351362143097f1a0d80ce91f31bd1f2d77bd7e738f8701d48ad28fdf64ba8dd
+Dataset ID: cit-public-v1
+The fixture is included under tests/fixtures for reproducible contract tests.
+Counts are recorded in MILESTONE_2F_REPORT.md as observed source values, not constants.
